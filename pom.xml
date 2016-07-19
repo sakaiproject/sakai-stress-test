@@ -1,0 +1,111 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.gatling</groupId>
+  <artifactId>gatling-maven-plugin-demo</artifactId>
+  <version>2.2.2</version>
+
+  <properties>
+    <source.property>1.8</source.property>
+    <target.property>1.8</target.property>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <gatling.version>${project.version}</gatling.version>
+    <gatling-plugin.version>2.2.0</gatling-plugin.version>
+    <scala-maven-plugin.version>3.2.2</scala-maven-plugin.version>
+    <!-- Common Gatling Properties -->
+    <!-- Pause between request (seconds) -->
+    <minpause>1</minpause>
+    <maxpause>1</maxpause>
+    <!-- Concurrent users -->
+    <randomUsers>1</randomUsers>
+    <exhausUsers>1</exhausUsers>
+    <rampUpTime>10</rampUpTime>
+    <!-- User Loop -->
+    <userLoop>1</userLoop>
+    <!-- Browse Loop -->
+    <siteLoop>1</siteLoop>
+    <toolLoop>1</toolLoop>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.gatling.highcharts</groupId>
+      <artifactId>gatling-charts-highcharts</artifactId>
+      <version>${gatling.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <profiles>
+  	<profile>
+  		<id>nightly-mysql</id>
+  		<activation>
+  			<activeByDefault>true</activeByDefault>
+  		</activation>
+  		<properties>
+  			<testurl>https://trunk-mysql.nightly.sakaiproject.org</testurl>
+  			<testname>nightly-mysql</testname>
+  		</properties>
+  	</profile>
+  	<profile>
+  		<id>nightly-oracle</id>
+  		<properties>
+  			<testurl>https://trunk-oracle.nightly.sakaiproject.org</testurl>
+  			<testname>nightly-oracle</testname>
+  		</properties>
+  	</profile>
+  	<profile>
+  		<id>11x-mysql</id>
+  		<properties>
+  			<testurl>https://qa11-mysql.nightly.sakaiproject.org/</testurl>
+  			<testname>11x-mysql</testname>
+  		</properties>
+  	</profile>
+  	<profile>
+  		<id>11x-oracle</id>
+  		<properties>
+  			<testurl>https://qa11-oracle.nightly.sakaiproject.org/</testurl>
+  			<testname>11x-oracle</testname>
+  		</properties>
+  	</profile>
+  </profiles>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>${scala-maven-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>io.gatling</groupId>
+        <artifactId>gatling-maven-plugin</artifactId>
+        <version>${gatling-plugin.version}</version>
+		<configuration>
+			<runMultipleSimulations>true</runMultipleSimulations>
+			<runDescription> #${testname} RU:[${randomUsers}] EU:[${exhausUsers}] UP:[${rampUpTime}] LOOP:[${userLoop},${siteLoop},${toolLoop}]</runDescription>
+			<jvmArgs>
+				<jvmArg>-Dtest-url=${testurl}</jvmArg>
+				<jvmArg>-Dmin-pause=${minpause}</jvmArg>
+				<jvmArg>-Dmax-pause=${maxpause}</jvmArg>
+				<jvmArg>-Drandom-users=${randomUsers}</jvmArg>
+				<jvmArg>-Dexhaus-users=${exhausUsers}</jvmArg>
+				<jvmArg>-Drampup-time=${rampUpTime}</jvmArg>
+				<jvmArg>-Duser-loop=${userLoop}</jvmArg>
+				<jvmArg>-Dsite-loop=${siteLoop}</jvmArg>
+				<jvmArg>-Dtool-loop=${toolLoop}</jvmArg>
+			</jvmArgs>
+		</configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
