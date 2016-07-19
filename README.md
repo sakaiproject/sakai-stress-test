@@ -17,18 +17,18 @@ This test is really simple, I hope we can add more complex cases soon.
 Use two different type of users "random" and "exahustive".
 
 The random users follow these steps:
-	- Go to the portal
-	- Login
-	- Go to one random site
-	- Got to one random tool
-	- Logout 
+- Go to the portal
+- Login
+- Go to one random site
+- Got to one random tool
+- Logout 
 
 The exahustive users follow these steps:
-	- Go to the portal
-	- Login
-	- Go to each site
-	- Got to each tool on each site
-	- Logout 
+- Go to the portal
+- Login
+- Go to each site
+- Got to each tool on each site
+- Logout 
 
 Both types of users are running at the same time, so during the test you've got the same number of users of both types.
 
@@ -37,27 +37,27 @@ Setting Up Your Test
 
 There are several things you can tune in this test:
 
-- Test Name: You can add a name to identify your test the report will include the name and also the configurable values for the test.
+- **Test Name**: You can add a name to identify your test the report will include the name and also the configurable values for the test.
 
-	$mvn gatling:execute -Dtestname=test-server-x
+	```$mvn gatling:execute -Dtestname=test-server-x```
 
-- Target URL: You can change the URL for the test by typing
+- **Target URL**: You can change the URL for the test by typing
 
-	$mvn gatling:execute -Dtesturl=https://my-sakai-instance
+	```$mvn gatling:execute -Dtesturl=https://my-sakai-instance```
 	
-- Concurrent Users and RampUp time: You can change the number of concurrent users of each type and the time to rampup them by typing
+- **Concurrent Users and RampUp time**: You can change the number of concurrent users of each type and the time to rampup them by typing
 
-	$mvn gatling:execute -DrandomUsers=<RandomUsers> -DexhausUsers=<ExhaustiveUsers> -DrampUpTime=<Seconds>
+	```$mvn gatling:execute -DrandomUsers=<RandomUsers> -DexhausUsers=<ExhaustiveUsers> -DrampUpTime=<Seconds>```
 	
-- Loops: You are able to repeat the test in different ways
+- **Loops**: You are able to repeat the test in different ways
 	
-	$mvn gatling:execute -DuserLoop=U -DsiteLoop=S -DtoolLoop=T
+	```$mvn gatling:execute -DuserLoop=U -DsiteLoop=S -DtoolLoop=T```
 
-	* userLoop: Each user (random or exhaustive) repeat U times the test case (all the steps)
-	* siteLoop: For random users only pick S random sites
-	* toolLoop: For random users only pick T tools on each random site
+	* _userLoop_: Each user (random or exhaustive) repeat U times the test case (all the steps)
+	* _siteLoop_: For random users only pick S random sites
+	* _toolLoop_: For random users only pick T tools on each random site
 	
-- User credentials: There is one csv file data/user_credentials.csv to add test users to your test case. 
+- **User credentials**: There is one csv file _data/user_credentials.csv_ to add test users to your test case. 
 	
 	
 Exploring the results
