@@ -45,6 +45,10 @@ There are several things you can tune in this test:
 
 	```$mvn gatling:execute -Dtesturl=https://my-sakai-instance```
 	
+- **Pause Between Requests**: You can change the pause between requests the process stops a random time between min and max values (in seconds)
+
+	```$mvn gatling:execute -Dminpause=N -Dmaxpause=M```
+	
 - **Concurrent Users and RampUp time**: You can change the number of concurrent users of each type and the time to rampup them by typing
 
 	```$mvn gatling:execute -DrandomUsers=<RandomUsers> -DexhausUsers=<ExhaustiveUsers> -DrampUpTime=<Seconds>```
@@ -59,6 +63,9 @@ There are several things you can tune in this test:
 	
 - **User credentials**: There is one csv file _data/user_credentials.csv_ to add test users to your test case. 
 	
+- **Impersonate Users**: For production environments probably you won't be able to know user credentials. In that case you can login as admin and impersonate test users. In that case you need to provide admin credentials in _data/admin_credentials.csv_ file. 
+
+	```$mvn gatling:execute -DimpersonateUsers=true```
 	
 Exploring the results
 =====================

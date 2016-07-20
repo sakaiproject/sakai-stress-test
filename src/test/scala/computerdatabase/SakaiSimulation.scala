@@ -23,6 +23,7 @@ class SakaiSimulation extends Simulation {
 		.baseURL(System.getProperty("test-url"))
 		/**.inferHtmlResources(BlackList(".*(\.css|\.js|\.png|\.jpg|\.gif|thumb).*"), WhiteList())*/
 		.userAgentHeader("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36")
+		.disableCaching
 		.extraInfoExtractor(extraInfo => List(extraInfo.request.getUrl,extraInfo.response.statusCode,extraInfo.response.bodyLength))
 
 	val headers = Map(
@@ -34,7 +35,32 @@ class SakaiSimulation extends Simulation {
 		"Upgrade-Insecure-Requests" -> "1")
 
 	val users = csv("user_credentials.csv").random
+	val admins = csv("admin_credentials.csv").random
+	val jsfViewStateCheck = css("input[name=com\\.sun\\.faces\\.VIEW]", "value").saveAs("viewState")
+	
+	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first zip second.map(s => URLDecoder.decode(s,"UTF-8")))
+	def checkAttrs(cssSelector: String, attrName: String, varName: String) = css(cssSelector,attrName).findAll.saveAs(varName)
+	def checkElement(cssSelector: String, varName: String) = css(cssSelector).findAll.saveAs(varName)
+	
+	def checkItsMe (username: String) = 
+		http("GetCurrentUser")
+		.get("/direct/user/current.json")
+		.headers(headers)
+		.check(status.is(successStatus))
+		.check(jsonPath("$[?(@.eid=='" + username + "')]"))
+	
+	def joinInSessionOneFiltered(session: Session, firstName: String, secondName: String, finalName: String, filteredBy: String) = 
+		session
+		.remove(firstName)
+		.remove(secondName)
+		.set(finalName, join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]]).filter(_._1 contains filteredBy)(0))
 
+	def joinInSession(session: Session, firstName: String, secondName: String, finalName: String) = 
+		session
+		.remove(firstName)
+		.remove(secondName)
+		.set(finalName, util.Random.shuffle(join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]])))
+	
 	object Gateway {
 		val gateway = group("Gateway") {
 			exec(http("Portal")
@@ -46,22 +72,70 @@ class SakaiSimulation extends Simulation {
 	}
 
 	object Login {
-		val login = group("Login") {
-			feed(users)
-			.exec(http("XLogin")
-				.post("/portal/xlogin")
-				.headers(headers)
-				.formParam("eid", "${username}")
-				.formParam("pw", "${password}")
-				.formParam("submit", "Log+In")
-				.check(status.is(successStatus))
-				.check(css("div.fav-title > a","href").findAll.saveAs("siteUrls"))
-				.check(css("div.fav-title > a","title").findAll.saveAs("siteTitles")))
-			.pause(pauseMin,pauseMax)
-			.exec(session => { 
-				val mySites: Vector[(String,String)] = (session("siteTitles").as[Vector[String]] zip session("siteUrls").as[Vector[String]])
-				session.set("sites", util.Random.shuffle(mySites))
-			})
+		val login = (impersonate: Boolean) =>
+		group("Login") {
+			doIfOrElse(impersonate) { /** Login as admin and then impersonate user */
+				feed(admins)
+				.exec(http("XLogin")
+					.post("/portal/xlogin")
+					.headers(headers)
+					.formParam("eid", "${adminusername}")
+					.formParam("pw", "${adminpassword}")
+					.formParam("submit", "Log+In")
+					.check(status.is(successStatus)))
+				.pause(pauseMin,pauseMax)
+				.exec(checkItsMe("${adminusername}"))
+				.group("BecomeUser") {
+					exec(http("AdminWorkspace")
+						.get("/portal/site/!admin")
+						.headers(headers)
+						.check(status.is(successStatus))
+						.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","adminToolUrls"))
+						.check(checkAttrs("span.Mrphs-toolsNav__menuitem--icon","class","adminToolIds")))
+					.exec(session => { joinInSessionOneFiltered(session,"adminToolIds","adminToolUrls","sutool","icon-sakai-su") })
+					.pause(pauseMin,pauseMax)
+					.exec(http("BecomeUser")
+						.get("${sutool._2}")
+						.headers(headers)
+						.check(status.is(successStatus))
+						.check(jsfViewStateCheck)
+						.check(css("form[id=su]","action").saveAs("supost")))
+					.pause(pauseMin,pauseMax)
+					.feed(users)
+					.exec(http("BecomeUserPost")
+						.post("${supost}")
+						.headers(headers)
+						.formParam("su:username", "${username}")
+						.formParam("su:become", "Become user")
+						.formParam("com.sun.faces.VIEW", "${viewState}")
+						.formParam("su", "su")
+						.check(status.is(successStatus)))
+					.pause(pauseMin,pauseMax)
+					.exec(checkItsMe("${username}"))
+					.exec(http("UserHome")
+						.get("/portal")
+						.headers(headers)
+						.check(status.is(successStatus))
+						.check(checkAttrs("div.fav-title > a","href","siteUrls"))
+						.check(checkAttrs("div.fav-title > a","title","siteTitles")))
+					.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
+				}
+			}
+			{	/** Use real credentials */
+				feed(users)
+				.exec(http("XLogin")
+					.post("/portal/xlogin")
+					.headers(headers)
+					.formParam("eid", "${username}")
+					.formParam("pw", "${password}")
+					.formParam("submit", "Log+In")
+					.check(status.is(successStatus))
+					.check(checkAttrs("div.fav-title > a","href","siteUrls"))
+					.check(checkAttrs("div.fav-title > a","title","siteTitles")))
+				.pause(pauseMin,pauseMax)
+				.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
+				.exec(checkItsMe("${username}"))
+			}
 		} 
 	}
 
@@ -79,10 +153,7 @@ class SakaiSimulation extends Simulation {
 					.pause(pauseMin,pauseMax)
 					/** Take care of all iframed tools */
 					.doIf("${frameUrls.exists()}") {
-						exec(session => { 
-							val myFrames: Vector[(String,String)] = (session("frameNames").as[Vector[String]] zip session("frameUrls").as[Vector[String]].map(s => URLDecoder.decode(s,"UTF-8")))
-							session.set("frames", util.Random.shuffle(myFrames)).remove("frameUrls").remove("frameNames")
-						})
+						exec(session => { joinInSession(session,"frameNames","frameUrls","frames") })
 						.foreach("${frames}","frame") {
 							exec(http("${frame._1}")
 								.get("${frame._2}")
@@ -124,13 +195,10 @@ class SakaiSimulation extends Simulation {
 					.headers(headers)
 					.check(status.is(successStatus))
 					.check(css("title:contains('Sakai : ${site._1} :')").exists)
-					.check(css("a.Mrphs-toolsNav__menuitem--link","href").findAll.saveAs("toolUrls"))
-					.check(css("span.Mrphs-toolsNav__menuitem--title").findAll.saveAs("toolNames")))
+					.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","toolUrls"))
+					.check(checkElement("span.Mrphs-toolsNav__menuitem--title","toolNames")))
 				.pause(pauseMin,pauseMax)
-				.exec(session => { 
-					val myTools: Vector[(String,String)] = (session("toolNames").as[Vector[String]] zip session("toolUrls").as[Vector[String]].map(s => URLDecoder.decode(s,"UTF-8")))
-					session.set("tools", util.Random.shuffle(myTools))
-				})
+				.exec(session => { joinInSession(session,"toolNames","toolUrls","tools") })
 			},
 			BrowseTools.browse(random)
 		)
@@ -156,23 +224,31 @@ class SakaiSimulation extends Simulation {
 	}
 
 	object Logout {
-		val logout = group("Logout") {
+		val logout = (impersonate: Boolean) =>
+		group("Logout") {
 			exec(http("Logout")
 				.get("/portal/logout")
 				.headers(headers)
 				.check(status.is(successStatus)))
+			.doIf(impersonate) {
+				exec(checkItsMe("${adminusername}"))
+				.exec(http("AdminLogout")
+					.get("/portal/logout")
+					.headers(headers)
+					.check(status.is(successStatus)))
+			}
 		}
 	}
 	
 	object SakaiSimulationSteps {
-		val test = (random: Boolean) => repeat(userLoop) {
-			exec(Gateway.gateway,Login.login,BrowseSites.browse(random),Logout.logout)
+		val test = (random: Boolean, impersonate: Boolean) => repeat(userLoop) {
+			exec(Gateway.gateway,Login.login(impersonate),BrowseSites.browse(random),Logout.logout(impersonate))
 		}
 	}
 	
-
-	val randomUsersScn = scenario("SakaiRandomUserSimulation").exec(SakaiSimulationSteps.test(true))
-	val exhaustiveUsersScn = scenario("SakaiExhaustiveUserSimulation").exec(SakaiSimulationSteps.test(false))
+	val impersonateUsers = System.getProperty("impersonate-users") == "true"
+	val randomUsersScn = scenario("SakaiRandomUserSimulation").exec(SakaiSimulationSteps.test(true,impersonateUsers))
+	val exhaustiveUsersScn = scenario("SakaiExhaustiveUserSimulation").exec(SakaiSimulationSteps.test(false,impersonateUsers))
 
 	object Setup {
 		val scenario = ListBuffer[io.gatling.core.structure.PopulationBuilder]()
