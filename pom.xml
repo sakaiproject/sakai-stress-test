@@ -27,6 +27,8 @@
     <!-- Browse Loop -->
     <siteLoop>1</siteLoop>
     <toolLoop>1</toolLoop>
+    <!-- Impersonate Users to bypass credentials -->
+    <impersonateUsers>false</impersonateUsers>
   </properties>
 
   <dependencies>
@@ -96,6 +98,7 @@
 				<jvmArg>-Duser-loop=${userLoop}</jvmArg>
 				<jvmArg>-Dsite-loop=${siteLoop}</jvmArg>
 				<jvmArg>-Dtool-loop=${toolLoop}</jvmArg>
+				<jvmArg>-Dimpersonate-users=${impersonateUsers}</jvmArg>
 			</jvmArgs>
 		</configuration>
         <executions>
