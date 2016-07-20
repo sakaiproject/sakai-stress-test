@@ -49,6 +49,18 @@ class SakaiSimulation extends Simulation {
 		.check(status.is(successStatus))
 		.check(jsonPath("$[?(@.eid=='" + username + "')]"))
 	
+	def joinInSessionOneFiltered(session: Session, firstName: String, secondName: String, finalName: String, filteredBy: String) = 
+		session
+		.remove(firstName)
+		.remove(secondName)
+		.set(finalName, join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]]).filter(_._1 contains filteredBy)(0))
+
+	def joinInSession(session: Session, firstName: String, secondName: String, finalName: String) = 
+		session
+		.remove(firstName)
+		.remove(secondName)
+		.set(finalName, util.Random.shuffle(join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]])))
+	
 	object Gateway {
 		val gateway = group("Gateway") {
 			exec(http("Portal")
@@ -80,10 +92,7 @@ class SakaiSimulation extends Simulation {
 						.check(status.is(successStatus))
 						.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","adminToolUrls"))
 						.check(checkAttrs("span.Mrphs-toolsNav__menuitem--icon","class","adminToolIds")))
-					.exec(session => { 
-						val adminTools = join(session("adminToolIds").as[Vector[String]],session("adminToolUrls").as[Vector[String]])
-						session.remove("adminToolUrls").remove("adminToolIds").set("sutool", adminTools.filter(_._1 contains "icon-sakai-su")(0))
-					})
+					.exec(session => { joinInSessionOneFiltered(session,"adminToolIds","adminToolUrls","sutool","icon-sakai-su") })
 					.pause(pauseMin,pauseMax)
 					.exec(http("BecomeUser")
 						.get("${sutool._2}")
@@ -109,10 +118,7 @@ class SakaiSimulation extends Simulation {
 						.check(status.is(successStatus))
 						.check(checkAttrs("div.fav-title > a","href","siteUrls"))
 						.check(checkAttrs("div.fav-title > a","title","siteTitles")))
-					.exec(session => { 
-						val mySites = join(session("siteTitles").as[Vector[String]],session("siteUrls").as[Vector[String]])
-						session.remove("siteUrls").remove("siteTitles").set("sites", util.Random.shuffle(mySites))
-					})
+					.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
 				}
 			}
 			{	/** Use real credentials */
@@ -127,10 +133,7 @@ class SakaiSimulation extends Simulation {
 					.check(checkAttrs("div.fav-title > a","href","siteUrls"))
 					.check(checkAttrs("div.fav-title > a","title","siteTitles")))
 				.pause(pauseMin,pauseMax)
-				.exec(session => { 
-					val mySites = join(session("siteTitles").as[Vector[String]],session("siteUrls").as[Vector[String]])
-					session.remove("siteUrls").remove("siteTitles").set("sites", util.Random.shuffle(mySites))
-				})
+				.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
 				.exec(checkItsMe("${username}"))
 			}
 		} 
@@ -150,10 +153,7 @@ class SakaiSimulation extends Simulation {
 					.pause(pauseMin,pauseMax)
 					/** Take care of all iframed tools */
 					.doIf("${frameUrls.exists()}") {
-						exec(session => { 
-							val myFrames = join(session("frameNames").as[Vector[String]],session("frameUrls").as[Vector[String]])
-							session.remove("frameUrls").remove("frameNames").set("frames", util.Random.shuffle(myFrames))
-						})
+						exec(session => { joinInSession(session,"frameNames","frameUrls","frames") })
 						.foreach("${frames}","frame") {
 							exec(http("${frame._1}")
 								.get("${frame._2}")
@@ -198,10 +198,7 @@ class SakaiSimulation extends Simulation {
 					.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","toolUrls"))
 					.check(checkElement("span.Mrphs-toolsNav__menuitem--title","toolNames")))
 				.pause(pauseMin,pauseMax)
-				.exec(session => { 
-					val myTools = join(session("toolNames").as[Vector[String]],session("toolUrls").as[Vector[String]])
-					session.set("tools", util.Random.shuffle(myTools))
-				})
+				.exec(session => { joinInSession(session,"toolNames","toolUrls","tools") })
 			},
 			BrowseTools.browse(random)
 		)
