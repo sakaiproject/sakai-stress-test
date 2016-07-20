@@ -18,6 +18,8 @@ class SakaiSimulation extends Simulation {
 	val siteLoop: Int = Integer.getInteger("site-loop",1)
 	val toolLoop: Int = Integer.getInteger("tool-loop",1)
 	val userLoop: Int = Integer.getInteger("user-loop",1)
+	val sakaiInstanceName = System.getProperty("instance-name")
+	val privatePrefix = System.getProperty("private-prefix")
 	
 	val httpProtocol = http
 		.baseURL(System.getProperty("test-url"))
@@ -34,8 +36,9 @@ class SakaiSimulation extends Simulation {
 		"Connection" -> "keep-alive",
 		"Upgrade-Insecure-Requests" -> "1")
 
-	val users = csv("user_credentials.csv").random
-	val admins = csv("admin_credentials.csv").random
+	val prefix = if (privatePrefix == "true") "private_" else ""
+	val users = csv(prefix+"user_credentials.csv").random
+	val admins = csv(prefix+"admin_credentials.csv").random
 	val jsfViewStateCheck = css("input[name=com\\.sun\\.faces\\.VIEW]", "value").saveAs("viewState")
 	
 	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first zip second.map(s => URLDecoder.decode(s,"UTF-8")))
@@ -147,7 +150,7 @@ class SakaiSimulation extends Simulation {
 						.get("${tool._2}")
 						.headers(headers)
 						.check(status.is(successStatus))
-						.check(css("title").is("Sakai : ${site._1} : ${tool._1}"))
+						.check(css("title").is(sakaiInstanceName+" : ${site._1} : ${tool._1}"))
 						.check(css("iframe","src").findAll.optional.saveAs("frameUrls"))
 						.check(css("iframe","title").findAll.optional.saveAs("frameNames")))
 					.pause(pauseMin,pauseMax)
@@ -194,7 +197,7 @@ class SakaiSimulation extends Simulation {
 					.get("${site._2}")
 					.headers(headers)
 					.check(status.is(successStatus))
-					.check(css("title:contains('Sakai : ${site._1} :')").exists)
+					.check(css("title:contains('"+sakaiInstanceName+" : ${site._1} :')").exists)
 					.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","toolUrls"))
 					.check(checkElement("span.Mrphs-toolsNav__menuitem--title","toolNames")))
 				.pause(pauseMin,pauseMax)

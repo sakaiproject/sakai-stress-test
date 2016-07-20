@@ -41,6 +41,10 @@ There are several things you can tune in this test:
 
 	```$mvn gatling:execute -Dtestname=test-server-x```
 
+- **Instance Name**: Set the name of your instance in order to check html response titles properly.
+
+	```$mvn gatling:execute -DinstanceName=mysakai```
+	
 - **Target URL**: You can change the URL for the test by typing
 
 	```$mvn gatling:execute -Dtesturl=https://my-sakai-instance```
@@ -66,6 +70,10 @@ There are several things you can tune in this test:
 - **Impersonate Users**: For production environments probably you won't be able to know user credentials. In that case you can login as admin and impersonate test users. In that case you need to provide admin credentials in _data/admin_credentials.csv_ file. 
 
 	```$mvn gatling:execute -DimpersonateUsers=true```
+
+- **Private credentials**: You can use your own credential files, just using the *private_* prefix in the mentioned files and typing: 
+
+	```$mvn gatling:execute -DprivateCredentials=true```
 	
 Exploring the results
 =====================

@@ -29,6 +29,10 @@
     <toolLoop>1</toolLoop>
     <!-- Impersonate Users to bypass credentials -->
     <impersonateUsers>false</impersonateUsers>
+    <!-- Instance Name -->
+    <instanceName>Sakai</instanceName>
+    <!-- Private Files -->
+    <privateCredentials>false</privateCredentials>
   </properties>
 
   <dependencies>
@@ -87,7 +91,7 @@
         <version>${gatling-plugin.version}</version>
 		<configuration>
 			<runMultipleSimulations>true</runMultipleSimulations>
-			<runDescription> #${testname} RU:[${randomUsers}] EU:[${exhausUsers}] UP:[${rampUpTime}] LOOP:[${userLoop},${siteLoop},${toolLoop}]</runDescription>
+			<runDescription> #${instanceName}(${testname}) RU:[${randomUsers}] EU:[${exhausUsers}] UP:[${rampUpTime}] LOOP:[${userLoop},${siteLoop},${toolLoop}]</runDescription>
 			<jvmArgs>
 				<jvmArg>-Dtest-url=${testurl}</jvmArg>
 				<jvmArg>-Dmin-pause=${minpause}</jvmArg>
@@ -99,6 +103,8 @@
 				<jvmArg>-Dsite-loop=${siteLoop}</jvmArg>
 				<jvmArg>-Dtool-loop=${toolLoop}</jvmArg>
 				<jvmArg>-Dimpersonate-users=${impersonateUsers}</jvmArg>
+				<jvmArg>-Dinstance-name=${instanceName}</jvmArg>
+				<jvmArg>-Dprivate-prefix=${privateCredentials}</jvmArg>
 			</jvmArgs>
 		</configuration>
         <executions>
