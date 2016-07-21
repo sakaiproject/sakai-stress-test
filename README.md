@@ -74,6 +74,12 @@ There are several things you can tune in this test:
 - **Private credentials**: You can use your own credential files, just using the *private_* prefix in the mentioned files and typing: 
 
 	```$mvn test -DprivateCredentials=true```
+
+- **Feed Strategy**: You can change the way gatling is consuming users from your credentials file (default is random), jus type: 
+
+	```$mvn test -DfeedStrategy=circular```
+	
+	to learn more see http://gatling.io/docs/2.2.2/session/feeder.html#feeder
 	
 - **NOTE**: You can set all these properties in the _stresstest.properties_ file to avoid include a long list of -Dprop=vale list in your command line. Use your own properties file typing:
  

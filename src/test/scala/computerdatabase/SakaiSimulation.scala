@@ -26,7 +26,11 @@ class SakaiSimulation extends Simulation {
 		/**.inferHtmlResources(BlackList(".*(\.css|\.js|\.png|\.jpg|\.gif|thumb).*"), WhiteList())*/
 		.userAgentHeader("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36")
 		.disableCaching
-		.extraInfoExtractor(extraInfo => List(extraInfo.request.getUrl,extraInfo.response.statusCode,extraInfo.response.bodyLength))
+		/** Extra info for simulation.log username, url, http status, response length */
+		.extraInfoExtractor(extraInfo => List(extraInfo.session("username").asOption[String].getOrElse(extraInfo.session("adminusername").asOption[String].getOrElse("annonymous")),
+											  extraInfo.request.getUrl,
+											  extraInfo.response.statusCode.getOrElse(0),
+											  extraInfo.response.bodyLength))
 
 	val headers = Map(
 		"Accept" -> "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -36,9 +40,18 @@ class SakaiSimulation extends Simulation {
 		"Connection" -> "keep-alive",
 		"Upgrade-Insecure-Requests" -> "1")
 
+	/** Let change feed strategy and avoid error if there are not enough users in the feed */
+	def getFeeder(name: String, strategy: String) = strategy match {
+		case "queue" => csv(name).queue
+		case "shuffle" => csv(name).shuffle
+		case "random" => csv(name).random
+		case "circular" => csv(name).circular
+		case whatever => csv(name) /** queue is default strategy */
+	} 
+
 	val prefix = if (privatePrefix == "true") "private_" else ""
-	val users = csv(prefix+"user_credentials.csv").random
-	val admins = csv(prefix+"admin_credentials.csv").random
+	val users = getFeeder(prefix+"user_credentials.csv",System.getProperty("feed-strategy"))
+	val admins = getFeeder(prefix+"admin_credentials.csv",System.getProperty("feed-strategy"))
 	val jsfViewStateCheck = css("input[name=com\\.sun\\.faces\\.VIEW]", "value").saveAs("viewState")
 	
 	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first zip second.map(s => URLDecoder.decode(s,"UTF-8")))

@@ -112,6 +112,7 @@
 				<jvmArg>-Dimpersonate-users=${impersonateUsers}</jvmArg>
 				<jvmArg>-Dinstance-name=${instanceName}</jvmArg>
 				<jvmArg>-Dprivate-prefix=${privateCredentials}</jvmArg>
+				<jvmArg>-Dfeed-strategy=${feedStrategy}</jvmArg>
 			</jvmArgs>
 		</configuration>
         <executions>
