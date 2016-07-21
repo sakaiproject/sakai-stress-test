@@ -35,7 +35,7 @@ Both types of users are running at the same time, so during the test you've got 
 Some screenshots
 ================
 
-![](https://raw.githubusercontent.com/sakaiproject/sakai-stress-test/master/src/test/resources/images/global1.jpg)![](https://raw.githubusercontent.com/sakaiproject/sakai-stress-test/master/src/test/resources/images/global2.jpg)![](https://raw.githubusercontent.com/sakaiproject/sakai-stress-test/master/src/test/resources/images/detail1.jpg)
+![](https://raw.githubusercontent.com/sakaiproject/sakai-stress-test/master/src/test/resources/request-bodies/global1.jpg)![](https://raw.githubusercontent.com/sakaiproject/sakai-stress-test/master/src/test/resources/request-bodies/global2.jpg)![](https://raw.githubusercontent.com/sakaiproject/sakai-stress-test/master/src/test/resources/request-bodies/detail1.jpg)
 
 Setting Up Your Test
 ====================
