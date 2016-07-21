@@ -5,7 +5,7 @@ This is a Simple Stress Test for Sakai 11+ instances.
 
 To test it out, simply execute the following command:
 
-    $mvn gatling:execute
+    $mvn test
 
 Each time you run this you'll get a result in target/sakaisimulation-xxxxxxx folder.
 
@@ -39,27 +39,27 @@ There are several things you can tune in this test:
 
 - **Test Name**: You can add a name to identify your test the report will include the name and also the configurable values for the test.
 
-	```$mvn gatling:execute -Dtestname=test-server-x```
+	```$mvn test -Dtestname=test-server-x```
 
 - **Instance Name**: Set the name of your instance in order to check html response titles properly.
 
-	```$mvn gatling:execute -DinstanceName=mysakai```
+	```$mvn test -DinstanceName=mysakai```
 	
 - **Target URL**: You can change the URL for the test by typing
 
-	```$mvn gatling:execute -Dtesturl=https://my-sakai-instance```
+	```$mvn test -Dtesturl=https://my-sakai-instance```
 	
 - **Pause Between Requests**: You can change the pause between requests the process stops a random time between min and max values (in seconds)
 
-	```$mvn gatling:execute -Dminpause=N -Dmaxpause=M```
+	```$mvn test -Dminpause=N -Dmaxpause=M```
 	
 - **Concurrent Users and RampUp time**: You can change the number of concurrent users of each type and the time to rampup them by typing
 
-	```$mvn gatling:execute -DrandomUsers=<RandomUsers> -DexhausUsers=<ExhaustiveUsers> -DrampUpTime=<Seconds>```
+	```$mvn test -DrandomUsers=<RandomUsers> -DexhausUsers=<ExhaustiveUsers> -DrampUpTime=<Seconds>```
 	
 - **Loops**: You are able to repeat the test in different ways
 	
-	```$mvn gatling:execute -DuserLoop=U -DsiteLoop=S -DtoolLoop=T```
+	```$mvn test -DuserLoop=U -DsiteLoop=S -DtoolLoop=T```
 
 	* _userLoop_: Each user (random or exhaustive) repeat U times the test case (all the steps)
 	* _siteLoop_: For random users only pick S random sites
@@ -69,11 +69,16 @@ There are several things you can tune in this test:
 	
 - **Impersonate Users**: For production environments probably you won't be able to know user credentials. In that case you can login as admin and impersonate test users. In that case you need to provide admin credentials in _data/admin_credentials.csv_ file. 
 
-	```$mvn gatling:execute -DimpersonateUsers=true```
+	```$mvn test -DimpersonateUsers=true```
 
 - **Private credentials**: You can use your own credential files, just using the *private_* prefix in the mentioned files and typing: 
 
-	```$mvn gatling:execute -DprivateCredentials=true```
+	```$mvn test -DprivateCredentials=true```
+	
+- **NOTE**: You can set all these properties in the _stresstest.properties_ file to avoid include a long list of -Dprop=vale list in your command line. Use your own properties file typing:
+ 
+	```$mvn test -DpropertiesFile=<path-to-properties-file>```
+	
 	
 Exploring the results
 =====================

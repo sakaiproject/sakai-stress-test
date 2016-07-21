@@ -14,25 +14,9 @@
     <gatling.version>${project.version}</gatling.version>
     <gatling-plugin.version>2.2.0</gatling-plugin.version>
     <scala-maven-plugin.version>3.2.2</scala-maven-plugin.version>
+    <properties-maven-plugin>1.0.0</properties-maven-plugin>
     <!-- Common Gatling Properties -->
-    <!-- Pause between request (seconds) -->
-    <minpause>1</minpause>
-    <maxpause>1</maxpause>
-    <!-- Concurrent users -->
-    <randomUsers>1</randomUsers>
-    <exhausUsers>1</exhausUsers>
-    <rampUpTime>10</rampUpTime>
-    <!-- User Loop -->
-    <userLoop>1</userLoop>
-    <!-- Browse Loop -->
-    <siteLoop>1</siteLoop>
-    <toolLoop>1</toolLoop>
-    <!-- Impersonate Users to bypass credentials -->
-    <impersonateUsers>false</impersonateUsers>
-    <!-- Instance Name -->
-    <instanceName>Sakai</instanceName>
-    <!-- Private Files -->
-    <privateCredentials>false</privateCredentials>
+    <propertiesFile>src/test/resources/stresstest.properties</propertiesFile>
   </properties>
 
   <dependencies>
@@ -50,10 +34,7 @@
   		<activation>
   			<activeByDefault>true</activeByDefault>
   		</activation>
-  		<properties>
-  			<testurl>https://trunk-mysql.nightly.sakaiproject.org</testurl>
-  			<testname>nightly-mysql</testname>
-  		</properties>
+  		<!-- Set default properties on the stresstest.properties file -->
   	</profile>
   	<profile>
   		<id>nightly-oracle</id>
@@ -86,6 +67,24 @@
         <version>${scala-maven-plugin.version}</version>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>${properties-maven-plugin}</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>${propertiesFile}</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>io.gatling</groupId>
         <artifactId>gatling-maven-plugin</artifactId>
         <version>${gatling-plugin.version}</version>
@@ -109,6 +108,7 @@
 		</configuration>
         <executions>
           <execution>
+          	<phase>test</phase>
             <goals>
               <goal>execute</goal>
             </goals>
