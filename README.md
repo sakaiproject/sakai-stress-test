@@ -79,7 +79,10 @@ There are several things you can tune in this test:
  
 	```$mvn test -DpropertiesFile=<path-to-properties-file>```
 	
-	
+	or use _private_stresstest.properties_ and private credentials files and type:
+
+	```$mvn test -Pprivate```
+
 Exploring the results
 =====================
 
