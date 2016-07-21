@@ -57,6 +57,14 @@
   			<testname>11x-oracle</testname>
   		</properties>
   	</profile>
+  	<profile>
+  		<!-- Use this profile if you want to hide your credentials and properties -->
+  		<id>private</id>
+  		<properties>
+  			<propertiesFile>src/test/resources/private_stresstest.properties</propertiesFile>
+  			<privateCredentials>true</privateCredentials>
+  		</properties>
+  	</profile>
   </profiles>
 
   <build>
