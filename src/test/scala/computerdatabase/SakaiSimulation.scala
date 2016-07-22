@@ -171,8 +171,8 @@ class SakaiSimulation extends Simulation {
 					.check(css("title").transform( (x,session) => {
 						x.replace(" : My Workspace : "," : Home : ").indexOf(sakaiInstanceName+" : " + session("site").as[(String,String)]._1 + " : " + session("tool").as[(String,String)]._1)
 					}).greaterThan(-1))
-					.check(css("iframe","src").findAll.optional.saveAs("frameUrls"))
-					.check(css("iframe","title").findAll.optional.saveAs("frameNames")))
+					.check(css("iframe[title]","src").findAll.optional.saveAs("frameUrls"))
+					.check(css("iframe[title]","title").findAll.optional.saveAs("frameNames")))
 				.pause(pauseMin,pauseMax)
 				/** Take care of all iframed tools */
 				.doIf("${frameUrls.exists()}") {
