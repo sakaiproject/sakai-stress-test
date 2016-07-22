@@ -77,6 +77,12 @@ class SakaiSimulation extends Simulation {
 		.remove(secondName)
 		.set(finalName, util.Random.shuffle(join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]])))
 	
+	def joinInSessionFiltered(session: Session, firstName: String, secondName: String, finalName: String, filteredBy: String) = 
+		session
+		.remove(firstName)
+		.remove(secondName)
+		.set(finalName, join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]]).filter(_._2 matches filteredBy))
+		
 	object Gateway {
 		val gateway = group("Gateway") {
 			exec(http("Portal")
@@ -133,7 +139,7 @@ class SakaiSimulation extends Simulation {
 						.headers(headers)
 						.check(status.is(successStatus))
 						.check(checkAttrs("div.fav-title > a","href","siteUrls"))
-						.check(checkAttrs("div.fav-title > a","title","siteTitles")))
+						.check(checkElement("div.fav-title > a > span.fullTitle","siteTitles")))
 					.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
 				}
 			}
@@ -147,7 +153,7 @@ class SakaiSimulation extends Simulation {
 					.formParam("submit", "Log+In")
 					.check(status.is(successStatus))
 					.check(checkAttrs("div.fav-title > a","href","siteUrls"))
-					.check(checkAttrs("div.fav-title > a","title","siteTitles")))
+					.check(checkElement("div.fav-title > a > span.fullTitle","siteTitles")))
 				.pause(pauseMin,pauseMax)
 				.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
 				.exec(checkItsMe("${username}"))
@@ -156,27 +162,27 @@ class SakaiSimulation extends Simulation {
 	}
 
 	object ExploreTool {
-		val explore = /** Do not process help tool */
-			doIf(session => !session("tool").as[(String,String)]._2.contains("/portal/help/main")) {
-				group("${tool._1}") {
-					exec(http("${tool._1}")
-						.get("${tool._2}")
-						.headers(headers)
-						.check(status.is(successStatus))
-						.check(css("title").is(sakaiInstanceName+" : ${site._1} : ${tool._1}"))
-						.check(css("iframe","src").findAll.optional.saveAs("frameUrls"))
-						.check(css("iframe","title").findAll.optional.saveAs("frameNames")))
-					.pause(pauseMin,pauseMax)
-					/** Take care of all iframed tools */
-					.doIf("${frameUrls.exists()}") {
-						exec(session => { joinInSession(session,"frameNames","frameUrls","frames") })
-						.foreach("${frames}","frame") {
-							exec(http("${frame._1}")
-								.get("${frame._2}")
-								.headers(headers)
-								.check(status.is(successStatus)))
-							.pause(pauseMin,pauseMax)
-						}
+		val explore = 
+			group("${tool._1}") {
+				exec(http("${tool._1}")
+					.get("${tool._2}")
+					.headers(headers)
+					.check(status.is(successStatus))
+					.check(css("title").transform( (x,session) => {
+						x.replace(" : My Workspace : "," : Home : ").indexOf(sakaiInstanceName+" : " + session("site").as[(String,String)]._1 + " : " + session("tool").as[(String,String)]._1)
+					}).greaterThan(-1))
+					.check(css("iframe","src").findAll.optional.saveAs("frameUrls"))
+					.check(css("iframe","title").findAll.optional.saveAs("frameNames")))
+				.pause(pauseMin,pauseMax)
+				/** Take care of all iframed tools */
+				.doIf("${frameUrls.exists()}") {
+					exec(session => { joinInSession(session,"frameNames","frameUrls","frames") })
+					.foreach("${frames}","frame") {
+						exec(http("${frame._1}")
+							.get("${frame._2}")
+							.headers(headers)
+							.check(status.is(successStatus)))
+						.pause(pauseMin,pauseMax)
 					}
 				}
 			}
@@ -210,11 +216,13 @@ class SakaiSimulation extends Simulation {
 					.get("${site._2}")
 					.headers(headers)
 					.check(status.is(successStatus))
-					.check(css("title:contains('"+sakaiInstanceName+" : ${site._1} :')").exists)
-					.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","toolUrls"))
-					.check(checkElement("span.Mrphs-toolsNav__menuitem--title","toolNames")))
+					.check(css("title").transform( (x,session) => {
+						x.replace(" : My Workspace : "," : Home : ").indexOf(sakaiInstanceName+" : " + session("site").as[(String,String)]._1 + " : ")
+					}).greaterThan(-1))
+					.check(checkAttrs("a[title].Mrphs-toolsNav__menuitem--link","href","toolUrls"))
+					.check(checkElement("a[title] > span.Mrphs-toolsNav__menuitem--title","toolNames")))
 				.pause(pauseMin,pauseMax)
-				.exec(session => { joinInSession(session,"toolNames","toolUrls","tools") })
+				.exec(session => { joinInSessionFiltered(session,"toolNames","toolUrls","tools",".*\\/portal\\/site\\/.*\\/(tool|page|page-reset)\\/.*") })
 			},
 			BrowseTools.browse(random)
 		)
