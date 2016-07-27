@@ -17,6 +17,7 @@
     <properties-maven-plugin>1.0.0</properties-maven-plugin>
     <!-- Common Gatling Properties -->
     <propertiesFile>src/test/resources/stresstest.properties</propertiesFile>
+    <resultsFolder>target/gatling/temp</resultsFolder>
   </properties>
 
   <dependencies>
@@ -99,7 +100,9 @@
 		<configuration>
 			<runMultipleSimulations>true</runMultipleSimulations>
 			<runDescription> #${instanceName}(${testname}) RU:[${randomUsers}] EU:[${exhausUsers}] UP:[${rampUpTime}] LOOP:[${userLoop},${siteLoop},${toolLoop}]</runDescription>
+			<resultsFolder>${resultsFolder}</resultsFolder>
 			<jvmArgs>
+				<jvmArg>-Dtest-name=${testname}</jvmArg>
 				<jvmArg>-Dtest-url=${testurl}</jvmArg>
 				<jvmArg>-Dmin-pause=${minpause}</jvmArg>
 				<jvmArg>-Dmax-pause=${maxpause}</jvmArg>
@@ -113,6 +116,8 @@
 				<jvmArg>-Dinstance-name=${instanceName}</jvmArg>
 				<jvmArg>-Dprivate-prefix=${privateCredentials}</jvmArg>
 				<jvmArg>-Dfeed-strategy=${feedStrategy}</jvmArg>
+				<jvmArg>-Dlog-level=${logLevel}</jvmArg>
+				<jvmArg>-Dresults-folder=${resultsFolder}</jvmArg>
 			</jvmArgs>
 		</configuration>
         <executions>
@@ -122,6 +127,38 @@
               <goal>execute</goal>
             </goals>
           </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+        	<execution>
+        		<phase>test</phase>
+        		<goals>
+        			<goal>run</goal>
+        		</goals>
+        		<configuration>
+        			<tasks>
+        				<echo>Moving results from temp to definitive folder</echo>
+        				<mkdir dir="target/gatling/${instanceName}/${testname}"/>
+        				<dirset id="temp.folder" dir="${resultsFolder}" includes="*"/>
+        				<property name="simulation.folder" refid="temp.folder"/>
+        				<move todir="${resultsFolder}/${simulation.folder}">
+        					<fileset dir="${resultsFolder}">
+        						<include name="*.log"/>
+        					</fileset>
+        				</move>
+        				<move todir="target/gatling/${instanceName}/${testname}">
+        					<fileset dir="${resultsFolder}">
+        						<include name="**/*"/>
+        					</fileset>
+        				</move>
+        				<delete dir="${resultsFolder}"/>
+        			</tasks>
+        		</configuration>
+        	</execution>
         </executions>
       </plugin>
     </plugins>

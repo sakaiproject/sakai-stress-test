@@ -12,24 +12,20 @@
 		</encoder>
 	</appender>
 
-	<!-- Uncomment for also write log in a file
 	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    	<file>target/gatling/global.log</file>
+    	<file>${results-folder}/${log-level}.log</file>
     	<append>true</append>
     	<encoder>
       		<pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n</pattern>
     	</encoder>
   	</appender>
-	-->
-	
-	<!-- Uncomment for logging ALL HTTP request and responses -->
-	<!-- <logger name="io.gatling.http" level="TRACE" /> -->
-	<!-- Uncomment for logging ONLY FAILED HTTP request and responses -->
-	<!-- <logger name="io.gatling.http" level="DEBUG" /> -->
+  	
+	<logger name="io.gatling.http" level="${log-level}" additivity="false">
+		<appender-ref ref="FILE" />	
+	</logger>
 
 	<root level="WARN">
 		<appender-ref ref="CONSOLE" />
-		<!-- <appender-ref ref="FILE" /> -->
 	</root>
 
 </configuration>

@@ -94,6 +94,14 @@ There are several things you can tune in this test:
 
 	```$mvn test -Pprivate```
 
+Setting Up Your Test
+====================
+
+You can set the log level to review later requests or responses made during test, by default only failed request are logged (debug level), but you can change to log all requests typing:
+
+	```$mvn test -DlogLevel=trace```
+
+
 Exploring the results
 =====================
 
