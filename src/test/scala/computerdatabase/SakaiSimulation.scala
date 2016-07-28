@@ -23,6 +23,8 @@ class SakaiSimulation extends Simulation {
 	val fixedToolId = System.getProperty("fixed-tool")
 	val fixedSiteTitle = System.getProperty("fixed-site-title")
 	
+	var pluginManager = new SakaiPluginManager();
+	
 	val httpProtocol = http
 		.baseURL(System.getProperty("test-url"))
 		/**.inferHtmlResources(BlackList(".*(\.css|\.js|\.png|\.jpg|\.gif|thumb).*"), WhiteList())*/
@@ -186,6 +188,8 @@ class SakaiSimulation extends Simulation {
 						.pause(pauseMin,pauseMax)
 					}
 				}
+				.pause(pauseMin,pauseMax)
+				.exec(pluginManager.runPlugin)
 			}
 		
 	}
@@ -304,6 +308,6 @@ class SakaiSimulation extends Simulation {
 			)
 		}
 	}
-
+	
 	setUp(Setup.scenario.toList).protocols(httpProtocol)
 }
