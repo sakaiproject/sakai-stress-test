@@ -19,6 +19,9 @@ class SakaiSimulation extends Simulation {
 	val toolLoop: Int = Integer.getInteger("tool-loop",1)
 	val userLoop: Int = Integer.getInteger("user-loop",1)
 	val privatePrefix = System.getProperty("private-prefix")
+	val fixedSiteId = System.getProperty("fixed-site")
+	val fixedToolId = System.getProperty("fixed-tool")
+	val fixedSiteTitle = System.getProperty("fixed-site-title")
 	
 	val httpProtocol = http
 		.baseURL(System.getProperty("test-url"))
@@ -76,11 +79,11 @@ class SakaiSimulation extends Simulation {
 		.remove(secondName)
 		.set(finalName, util.Random.shuffle(join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]])))
 	
-	def joinInSessionFiltered(session: Session, firstName: String, secondName: String, finalName: String, filteredBy: String) = 
+	def joinInSessionFiltered(session: Session, firstName: String, secondName: String, finalName: String, oneFilteredBy: String, twoFilteredBy: String) = 
 		session
 		.remove(firstName)
 		.remove(secondName)
-		.set(finalName, join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]]).filter(_._2 matches filteredBy))
+		.set(finalName, join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]]).filter(_._1 matches oneFilteredBy).filter(_._2 matches twoFilteredBy))
 		
 	object Gateway {
 		val gateway = group("Gateway") {
@@ -139,7 +142,7 @@ class SakaiSimulation extends Simulation {
 						.check(status.is(successStatus))
 						.check(checkAttrs("div.fav-title > a","href","siteUrls"))
 						.check(checkAttrs("div.fav-title > a","title","siteTitles")))
-					.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
+					.exec(session => { joinInSessionFiltered(session,"siteTitles","siteUrls","sites",fixedSiteTitle,".*\\/portal\\/site\\/"+fixedSiteId) })
 				}
 			}
 			{	/** Use real credentials */
@@ -154,7 +157,7 @@ class SakaiSimulation extends Simulation {
 					.check(checkAttrs("div.fav-title > a","href","siteUrls"))
 					.check(checkAttrs("div.fav-title > a","title","siteTitles")))
 				.pause(pauseMin,pauseMax)
-				.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
+				.exec(session => { joinInSessionFiltered(session,"siteTitles","siteUrls","sites",fixedSiteTitle,".*\\/portal\\/site\\/"+fixedSiteId) })
 				.exec(checkItsMe("${username}"))
 			}
 		} 
@@ -168,7 +171,7 @@ class SakaiSimulation extends Simulation {
 					.headers(headers)
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
-					.check(css("a.Mrphs-hierarchy--toolName > span:last-child").is("${tool._1}"))
+					.check(css("a.Mrphs-hierarchy--toolName > span[class*='${tool._1}'].Mrphs-breadcrumb--icon").exists)
 					.check(css("iframe[title]","src").findAll.optional.saveAs("frameUrls"))
 					.check(css("iframe[title]","title").findAll.optional.saveAs("frameNames")))
 				.pause(pauseMin,pauseMax)
@@ -208,7 +211,7 @@ class SakaiSimulation extends Simulation {
 	}
 
 	object ExploreSite {
-		val explore = (random: Boolean) => exec(
+		val explore = (random: Boolean) =>
 			group("GetSite") {
 				exec(http("GetSite")
 					.get("${site._2}")
@@ -216,12 +219,22 @@ class SakaiSimulation extends Simulation {
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
 					.check(checkAttrs("a[title].Mrphs-toolsNav__menuitem--link","href","toolUrls"))
-					.check(checkElement("a[title] > span.Mrphs-toolsNav__menuitem--title","toolNames")))
+					.check(css("a[title] > span.Mrphs-toolsNav__menuitem--icon","class").findAll.transform( 
+						full_list => {
+							/** class also contains non useful classes, drop them */
+							val new_list = new Array[String](full_list.length) 
+							for (i <- 0 until full_list.length) {
+								new_list(i) = full_list(i).replace("Mrphs-toolsNav__menuitem--icon","").replace("icon-active","").replace("icon-","").trim()
+							}
+							new_list.to[collection.immutable.Seq]
+						}).saveAs("toolIds")))
 				.pause(pauseMin,pauseMax)
-				.exec(session => { joinInSessionFiltered(session,"toolNames","toolUrls","tools",".*\\/portal\\/site\\/.*\\/(tool|page|page-reset)\\/.*") })
-			},
-			BrowseTools.browse(random)
-		)
+				.exec(session => { joinInSessionFiltered(session,"toolIds","toolUrls","tools",fixedToolId,".*\\/portal\\/site\\/.*\\/(tool|page|page-reset)\\/.*") })
+			}
+			.doIf(_("tools").as[Vector[String]].length>0) {
+				BrowseTools.browse(random)
+			}
+		
 	}
 
 	object BrowseSites {
@@ -262,7 +275,13 @@ class SakaiSimulation extends Simulation {
 	
 	object SakaiSimulationSteps {
 		val test = (random: Boolean, impersonate: Boolean) => repeat(userLoop) {
-			exec(Gateway.gateway,Login.login(impersonate),BrowseSites.browse(random),Logout.logout(impersonate))
+			exec(
+				Gateway.gateway,
+				Login.login(impersonate),
+				doIf(_("sites").as[Vector[String]].length>0) {
+					BrowseSites.browse(random)
+				},
+				Logout.logout(impersonate))
 		}
 	}
 	

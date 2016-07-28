@@ -76,11 +76,25 @@ There are several things you can tune in this test:
 
 	```$mvn test -DprivateCredentials=true```
 
-- **Feed Strategy**: You can change the way gatling is consuming users from your credentials file (default is random), jus type: 
+- **Feed Strategy**: You can change the way gatling is consuming users from your credentials file (default is random), just type: 
 
 	```$mvn test -DfeedStrategy=circular```
 	
 	to learn more see http://gatling.io/docs/2.2.2/session/feeder.html#feeder
+
+- **Fixed Ids**: You could focus your test in just one site or tool type:
+
+	```$mvn test -DsiteId=abc.*```
+	
+	the test will try to browse only sites with id starting with abc
+	
+	```$mvn test -DsiteTitle=.*SMPL202.*```
+	
+	the test will try to browse only sites with title contains SMPL202
+
+	```$mvn test -DtoolId=sakai-announcements```
+	
+	the test will try to browse only announcements tool on each site
 	
 - **NOTE**: You can set all these properties in the _stresstest.properties_ file to avoid include a long list of -Dprop=vale list in your command line. Use your own properties file typing:
  
