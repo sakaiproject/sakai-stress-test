@@ -3,11 +3,11 @@ Sakai Gatling Stress Test
 
 This is a Simple Stress Test for Sakai 11+ instances.
 
-To test it out, simply execute the following command:
+To test it out, simply execute the following command (by default it will run against the Sakai nightly server on https://trunk-mysql.nightly.sakaiproject.org):
 
     $mvn test
 
-Each time you run this you'll get a result in target/sakaisimulation-xxxxxxx folder.
+Each time you run this you'll get a result in `target/gatling/nightly-mysql/sakaisimulation-xxxxxxx` folder.
 
 Stress Test Use Case
 ====================
