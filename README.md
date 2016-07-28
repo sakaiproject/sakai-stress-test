@@ -46,10 +46,6 @@ There are several things you can tune in this test:
 
 	```$mvn test -Dtestname=test-server-x```
 
-- **Instance Name**: Set the name of your instance in order to check html response titles properly.
-
-	```$mvn test -DinstanceName=mysakai```
-	
 - **Target URL**: You can change the URL for the test by typing
 
 	```$mvn test -Dtesturl=https://my-sakai-instance```
@@ -101,6 +97,7 @@ You can set the log level to review later requests or responses made during test
 
 	```$mvn test -DlogLevel=trace```
 
+**NOTE**: You'll find a file with name _${logLevel}.log_ inside the result folder at the end of the simulation.
 
 Exploring the results
 =====================

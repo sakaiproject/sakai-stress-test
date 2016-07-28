@@ -99,7 +99,7 @@
         <version>${gatling-plugin.version}</version>
 		<configuration>
 			<runMultipleSimulations>true</runMultipleSimulations>
-			<runDescription> #${instanceName}(${testname}) RU:[${randomUsers}] EU:[${exhausUsers}] UP:[${rampUpTime}] LOOP:[${userLoop},${siteLoop},${toolLoop}]</runDescription>
+			<runDescription> #${testname} RU:[${randomUsers}] EU:[${exhausUsers}] UP:[${rampUpTime}] LOOP:[${userLoop},${siteLoop},${toolLoop}] ${feedStrategy}</runDescription>
 			<resultsFolder>${resultsFolder}</resultsFolder>
 			<jvmArgs>
 				<jvmArg>-Dtest-name=${testname}</jvmArg>
@@ -113,7 +113,6 @@
 				<jvmArg>-Dsite-loop=${siteLoop}</jvmArg>
 				<jvmArg>-Dtool-loop=${toolLoop}</jvmArg>
 				<jvmArg>-Dimpersonate-users=${impersonateUsers}</jvmArg>
-				<jvmArg>-Dinstance-name=${instanceName}</jvmArg>
 				<jvmArg>-Dprivate-prefix=${privateCredentials}</jvmArg>
 				<jvmArg>-Dfeed-strategy=${feedStrategy}</jvmArg>
 				<jvmArg>-Dlog-level=${logLevel}</jvmArg>
@@ -142,7 +141,7 @@
         		<configuration>
         			<tasks>
         				<echo>Moving results from temp to definitive folder</echo>
-        				<mkdir dir="target/gatling/${instanceName}/${testname}"/>
+        				<mkdir dir="target/gatling/${testname}"/>
         				<dirset id="temp.folder" dir="${resultsFolder}" includes="*"/>
         				<property name="simulation.folder" refid="temp.folder"/>
         				<move todir="${resultsFolder}/${simulation.folder}">
@@ -150,7 +149,7 @@
         						<include name="*.log"/>
         					</fileset>
         				</move>
-        				<move todir="target/gatling/${instanceName}/${testname}">
+        				<move todir="target/gatling/${testname}">
         					<fileset dir="${resultsFolder}">
         						<include name="**/*"/>
         					</fileset>

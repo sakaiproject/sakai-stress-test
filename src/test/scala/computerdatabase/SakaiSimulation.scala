@@ -18,7 +18,6 @@ class SakaiSimulation extends Simulation {
 	val siteLoop: Int = Integer.getInteger("site-loop",1)
 	val toolLoop: Int = Integer.getInteger("tool-loop",1)
 	val userLoop: Int = Integer.getInteger("user-loop",1)
-	val sakaiInstanceName = System.getProperty("instance-name")
 	val privatePrefix = System.getProperty("private-prefix")
 	
 	val httpProtocol = http
@@ -54,7 +53,7 @@ class SakaiSimulation extends Simulation {
 	val admins = getFeeder(prefix+"admin_credentials.csv",System.getProperty("feed-strategy"))
 	val jsfViewStateCheck = css("input[name=com\\.sun\\.faces\\.VIEW]", "value").saveAs("viewState")
 	
-	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first zip second.map(s => URLDecoder.decode(s,"UTF-8")))
+	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first.map(s => s.replace("My Workspace","Home")) zip second.map(s => URLDecoder.decode(s,"UTF-8")))
 	def checkAttrs(cssSelector: String, attrName: String, varName: String) = css(cssSelector,attrName).findAll.saveAs(varName)
 	def checkElement(cssSelector: String, varName: String) = css(cssSelector).findAll.saveAs(varName)
 	
@@ -139,7 +138,7 @@ class SakaiSimulation extends Simulation {
 						.headers(headers)
 						.check(status.is(successStatus))
 						.check(checkAttrs("div.fav-title > a","href","siteUrls"))
-						.check(checkElement("div.fav-title > a > span.fullTitle","siteTitles")))
+						.check(checkAttrs("div.fav-title > a","title","siteTitles")))
 					.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
 				}
 			}
@@ -153,7 +152,7 @@ class SakaiSimulation extends Simulation {
 					.formParam("submit", "Log+In")
 					.check(status.is(successStatus))
 					.check(checkAttrs("div.fav-title > a","href","siteUrls"))
-					.check(checkElement("div.fav-title > a > span.fullTitle","siteTitles")))
+					.check(checkAttrs("div.fav-title > a","title","siteTitles")))
 				.pause(pauseMin,pauseMax)
 				.exec(session => { joinInSession(session,"siteTitles","siteUrls","sites") })
 				.exec(checkItsMe("${username}"))
@@ -168,9 +167,8 @@ class SakaiSimulation extends Simulation {
 					.get("${tool._2}")
 					.headers(headers)
 					.check(status.is(successStatus))
-					.check(css("title").transform( (x,session) => {
-						x.replace(" : My Workspace : "," : Home : ").indexOf(sakaiInstanceName+" : " + session("site").as[(String,String)]._1 + " : " + session("tool").as[(String,String)]._1)
-					}).greaterThan(-1))
+					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
+					.check(css("a.Mrphs-hierarchy--toolName > span:last-child").is("${tool._1}"))
 					.check(css("iframe[title]","src").findAll.optional.saveAs("frameUrls"))
 					.check(css("iframe[title]","title").findAll.optional.saveAs("frameNames")))
 				.pause(pauseMin,pauseMax)
@@ -216,9 +214,7 @@ class SakaiSimulation extends Simulation {
 					.get("${site._2}")
 					.headers(headers)
 					.check(status.is(successStatus))
-					.check(css("title").transform( (x,session) => {
-						x.replace(" : My Workspace : "," : Home : ").indexOf(sakaiInstanceName+" : " + session("site").as[(String,String)]._1 + " : ")
-					}).greaterThan(-1))
+					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
 					.check(checkAttrs("a[title].Mrphs-toolsNav__menuitem--link","href","toolUrls"))
 					.check(checkElement("a[title] > span.Mrphs-toolsNav__menuitem--title","toolNames")))
 				.pause(pauseMin,pauseMax)
