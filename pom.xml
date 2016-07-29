@@ -66,6 +66,12 @@
   			<privateCredentials>true</privateCredentials>
   		</properties>
   	</profile>
+  	<profile>
+  		<id>allplugins</id>
+  		<properties>
+  			<allowPlugins>.*</allowPlugins>
+  		</properties>
+  	</profile>
   </profiles>
 
   <build>
