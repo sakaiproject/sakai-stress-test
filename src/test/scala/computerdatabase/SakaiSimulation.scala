@@ -309,6 +309,6 @@ class SakaiSimulation extends Simulation {
 			)
 		}
 	}
-	
+
 	setUp(Setup.scenario.toList).protocols(httpProtocol)
 }
