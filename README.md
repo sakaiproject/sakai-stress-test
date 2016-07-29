@@ -120,7 +120,7 @@ Add plugins to do more things
 
 	```$mvn test -DallowPlugins=pluginName```
 
-You can create a plugin inside plugins folder, extending _SakaiSimulationPlugin_ class and adding the steps you want to run inside an concrete tool.
+You can create a plugin inside plugins folder, extending _SakaiSimulationPlugin_ class and adding the steps you want to run inside a concrete tool.
 For example you can add a plugin to create or remove a folder in resources each time a user reach this tool.
 
 Exploring the results

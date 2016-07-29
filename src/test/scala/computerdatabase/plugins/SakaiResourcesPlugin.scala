@@ -22,7 +22,7 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 				.check(css("a[href*='doOptions']","href").optional.saveAs("resources_options")))
 			.doIf("${resources_options.exists()}") {
 				exec(http("GetOptions")
-					.get("${annc_options}")
+					.get("${resources_options}")
 					.headers(headers)
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
