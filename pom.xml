@@ -120,6 +120,7 @@
 				<jvmArg>-Dfixed-site=${siteId}</jvmArg>
 				<jvmArg>-Dfixed-site-title=${siteTitle}</jvmArg>
 				<jvmArg>-Dfixed-tool=${toolId}</jvmArg>
+				<jvmArg>-Dallow-plugins=${allowPlugins}</jvmArg>
 			</jvmArgs>
 		</configuration>
         <executions>

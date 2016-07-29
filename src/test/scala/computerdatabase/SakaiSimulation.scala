@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.jdbc.Predef._
+import io.gatling.core.action.builder._
 import java.net._
 import scala.collection.mutable.ListBuffer
 
@@ -189,7 +190,7 @@ class SakaiSimulation extends Simulation {
 					}
 				}
 				.pause(pauseMin,pauseMax)
-				.exec(pluginManager.runPlugin)
+				.exec(new SwitchBuilder("${tool._1}", pluginManager.getPluginMap, None))
 			}
 		
 	}
