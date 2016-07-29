@@ -4,6 +4,7 @@ import scala.concurrent.duration._
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.jdbc.Predef._
+import io.gatling.core.action.builder._
 import java.net._
 import scala.collection.mutable.ListBuffer
 
@@ -22,6 +23,8 @@ class SakaiSimulation extends Simulation {
 	val fixedSiteId = System.getProperty("fixed-site")
 	val fixedToolId = System.getProperty("fixed-tool")
 	val fixedSiteTitle = System.getProperty("fixed-site-title")
+	
+	var pluginManager = new SakaiPluginManager();
 	
 	val httpProtocol = http
 		.baseURL(System.getProperty("test-url"))
@@ -186,6 +189,8 @@ class SakaiSimulation extends Simulation {
 						.pause(pauseMin,pauseMax)
 					}
 				}
+				.pause(pauseMin,pauseMax)
+				.exec(new SwitchBuilder("${tool._1}", pluginManager.getPluginMap, None))
 			}
 		
 	}
