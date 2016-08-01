@@ -11,6 +11,12 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 	
 	def toolid(): String = { "sakai-resources" }
  
+	// Define an infinite feeder which calculates random file names
+	val randomFileNames = Iterator.continually(
+	  // Random number will be accessible in session under variable "randomFileName"
+	  Map("randomFileName" -> ("img" + util.Random.nextInt(Integer.MAX_VALUE) + ".jpg"))
+	)
+ 
   	def getSimulationChain =
   		group("ResourcesUpload") {
 	  		exec(http("Resources")
@@ -42,7 +48,7 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 					.check(css("input[id='requestStateId']","value").saveAs("resources_upload_request_state_id"))
 					.check(css("input[id='pipe-init-id']","value").saveAs("resources_upload_pipe_init_id"))
 					.check(css("form[name='dropzone-form']","action").saveAs("resources_upload_dzurl")))
-				.exec(session => session.set("resources_upload_file_name", "img" + util.Random.nextInt(1000000) + ".jpg"))
+				.feed(randomFileNames)
 				.pause(pauseMin,pauseMax)
 				.exec(http("ResourcesUploadFile")
 					.post("${resources_upload_dzurl}")
@@ -52,7 +58,7 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 					.formParam("fullPath","undefined")
 					.formParam("hidden","false")
 					.formParam("sakai_csrf_token","${resources_upload_csrf_token}")
-					.bodyPart(RawFileBodyPart("file", "global2.jpg").contentType("image/jpeg").fileName("${resources_upload_file_name}")).asMultipartForm
+					.bodyPart(RawFileBodyPart("file", "global2.jpg").contentType("image/jpeg").fileName("${randomFileName}")).asMultipartForm
 					.check(status.is(successStatus)))
 				.pause(pauseMin,pauseMax)
 				.exec(http("ResourcesFinishUpload")
@@ -65,7 +71,7 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
 					.check(css("a.Mrphs-hierarchy--toolName > span[class*='${tool._1}'].Mrphs-breadcrumb--icon").exists)
-					.check(css("a[href*='${resources_upload_file_name}']").exists))
+					.check(css("a[href*='${randomFileName}']").exists))
 				.pause(pauseMin,pauseMax)
 				.exec(http("ResourcesMoveToTrash")
 					.post("${resources_upload_url}")
@@ -76,7 +82,7 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 					.formParam("criteria","title")
 					.formParam("sakai_action","doDispatchAction")
 					.formParam("rt_action","org.sakaiproject.content.types.fileUpload:delete")
-					.formParam("selectedItemId","${resources_upload_collection_id}${resources_upload_file_name}")
+					.formParam("selectedItemId","${resources_upload_collection_id}${randomFileName}")
 					.formParam("itemHidden","false")
 					.formParam("itemCanRevise","true")
 					.formParam("sakai_csrf_token","${resources_upload_csrf_token}")
@@ -96,7 +102,7 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
 					.check(css("a.Mrphs-hierarchy--toolName > span[class*='${tool._1}'].Mrphs-breadcrumb--icon").exists)
 					.check(css("a[href*='doViewTrash']","href").saveAs("resources_upload_vturl"))
-					.check(css("a[href*='${resources_upload_file_name}']").notExists))
+					.check(css("a[href*='${randomFileName}']").notExists))
 				.pause(pauseMin,pauseMax)
 		  		.exec(http("ResourcesGoToTrash")
 					.get("${resources_upload_vturl}")
@@ -114,7 +120,7 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 					.formParam("folderId","${resources_upload_folder_id}")
 					.formParam("sakai_action","doRestore")
 					.formParam("flow","remove")
-					.formParam("selectedMembers","${resources_upload_collection_id}${resources_upload_file_name}")
+					.formParam("selectedMembers","${resources_upload_collection_id}${randomFileName}")
 					.formParam("sakai_csrf_token","${resources_upload_csrf_token}")
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
@@ -133,7 +139,6 @@ class SakaiResourcesPlugin extends SakaiSimulationPlugin {
 						.remove("resources_upload_request_state_id")
 						.remove("resources_upload_pipe_init_id")
 						.remove("resources_upload_folder_id")
-						.remove("resources_upload_file_name")
 				})
 				
 			}
