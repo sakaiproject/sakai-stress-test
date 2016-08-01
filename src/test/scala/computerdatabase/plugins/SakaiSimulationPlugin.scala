@@ -15,6 +15,9 @@ trait SakaiSimulationPlugin {
 	  
 	val successStatus: Int = 200
 
+	val pauseMin: Int = 1
+	val pauseMax: Int = 3
+
 	def name: String
 	def description: String
 	def toolid: String

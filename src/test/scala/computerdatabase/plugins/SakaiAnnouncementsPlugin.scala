@@ -20,6 +20,7 @@ class SakaiAnnouncementsPlugin extends SakaiSimulationPlugin {
 				.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
 				.check(css("a.Mrphs-hierarchy--toolName > span[class*='${tool._1}'].Mrphs-breadcrumb--icon").exists)
 				.check(css("a[onclick*='doOptions']","onclick").transform(_.replace("location = '","").replace("';return false;","")).optional.saveAs("annc_options")))
+			.pause(pauseMin,pauseMax)				
 			.doIf("${annc_options.exists()}") {
 				exec(http("GetOptions")
 					.get("${annc_options}")
