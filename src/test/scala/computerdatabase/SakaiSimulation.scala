@@ -167,26 +167,37 @@ class SakaiSimulation extends Simulation {
 	}
 
 	object ExploreTool {
-		val explore = 
-			group("${tool._1}") {
-				exec(http("${tool._1}")
+		val explore =
+			exec(session => { session.set("toolName",session("tool").as[(String,String)]._1.replace("sakai-","")) }) 
+			.group("${toolName}") {
+				exec(http("${toolName}")
 					.get("${tool._2}")
 					.headers(headers)
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
 					.check(css("a.Mrphs-hierarchy--toolName > span[class*='${tool._1}'].Mrphs-breadcrumb--icon").exists)
 					.check(css("iframe[title]","src").findAll.optional.saveAs("frameUrls"))
-					.check(css("iframe[title]","title").findAll.optional.saveAs("frameNames")))
+					.check(css("div.Mrphs-toolBody","class").findAll.transform( 
+						full_list => {
+							/** class also contains non useful classes, drop them */
+							val new_list = new Array[String](full_list.length) 
+							for (i <- 0 until full_list.length) {
+								new_list(i) = full_list(i).replace("Mrphs-toolBody","").replace("--","").trim()
+							}
+							new_list.to[collection.immutable.Seq]
+						}).optional.saveAs("frameNames")))
 				.pause(pauseMin,pauseMax)
 				/** Take care of all iframed tools */
 				.doIf("${frameUrls.exists()}") {
 					exec(session => { joinInSession(session,"frameNames","frameUrls","frames") })
 					.foreach("${frames}","frame") {
-						exec(http("${frame._1}")
+						exec(session => { session.set("frameName",session("frame").as[(String,String)]._1.replace("sakai-","")) })
+						.exec(http("${frameName}")
 							.get("${frame._2}")
 							.headers(headers)
 							.check(status.is(successStatus)))
 						.pause(pauseMin,pauseMax)
+						.exec(new SwitchBuilder("${frame._1}", pluginManager.getPluginMap, None))
 					}
 				}
 				.pause(pauseMin,pauseMax)

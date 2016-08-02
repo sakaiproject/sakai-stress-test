@@ -22,7 +22,7 @@ class SakaiAnnouncementsPlugin extends SakaiSimulationPlugin {
 				.check(css("a[onclick*='doOptions']","onclick").transform(_.replace("location = '","").replace("';return false;","")).optional.saveAs("annc_options")))
 			.pause(pauseMin,pauseMax)				
 			.doIf("${annc_options.exists()}") {
-				exec(http("GetOptions")
+				exec(http("Options")
 					.get("${annc_options}")
 					.headers(headers)
 					.check(status.is(successStatus))
