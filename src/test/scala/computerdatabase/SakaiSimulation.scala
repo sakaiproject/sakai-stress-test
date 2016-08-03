@@ -176,13 +176,15 @@ class SakaiSimulation extends Simulation {
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
 					.check(css("a.Mrphs-hierarchy--toolName > span[class*='${tool._1}'].Mrphs-breadcrumb--icon").exists)
-					.check(css("iframe[title]","src").findAll.optional.saveAs("frameUrls"))
+					.check(css("div.Mrphs-toolBody > iframe[title]","src").findAll.optional.saveAs("frameUrls"))
 					.check(css("div.Mrphs-toolBody","class").findAll.transform( 
 						full_list => {
+							/** Some tools are loaded inline */
+							val filtered_list = full_list.filter(_!="Mrphs-toolBody Mrphs-toolBody--sakai-iframe-site")
 							/** class also contains non useful classes, drop them */
-							val new_list = new Array[String](full_list.length) 
-							for (i <- 0 until full_list.length) {
-								new_list(i) = full_list(i).replace("Mrphs-toolBody","").replace("--","").trim()
+							val new_list = new Array[String](filtered_list.length) 
+							for (i <- 0 until filtered_list.length) {
+								new_list(i) = filtered_list(i).replace("Mrphs-toolBody","").replace("--","").trim()
 							}
 							new_list.to[collection.immutable.Seq]
 						}).optional.saveAs("frameNames")))
