@@ -13,6 +13,12 @@ trait SakaiSimulationPlugin {
 		"Connection" -> "keep-alive",
 		"Upgrade-Insecure-Requests" -> "1")
 	  
+ 	// Define an infinite feeder which calculates random numbers 
+	val randomNumbers = Iterator.continually(
+	  // Random number will be accessible in session under variable "randomNum"
+	  Map("randomNum" -> util.Random.nextInt(Integer.MAX_VALUE))
+	)
+	 
 	val successStatus: Int = 200
 
 	val pauseMin: Int = 1

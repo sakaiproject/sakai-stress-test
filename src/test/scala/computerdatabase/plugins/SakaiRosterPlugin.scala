@@ -11,12 +11,6 @@ class SakaiRosterPlugin extends SakaiSimulationPlugin {
 	
 	def toolid(): String = { "sakai-site-roster2" }
  
-	// Define an infinite feeder which calculates random numbers 
-	val randomNumbers = Iterator.continually(
-	  // Random number will be accessible in session under variable "randomNum"
-	  Map("randomNum" -> util.Random.nextInt(Integer.MAX_VALUE))
-	)
-	 
   	def getSimulationChain = 
   		group("RosterGetPages") {
 	  		exec(http("Roster")
