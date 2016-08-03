@@ -115,6 +115,9 @@
 				<jvmArg>-Drandom-users=${randomUsers}</jvmArg>
 				<jvmArg>-Dexhaus-users=${exhausUsers}</jvmArg>
 				<jvmArg>-Drampup-time=${rampUpTime}</jvmArg>
+				<jvmArg>-Drampup-wait=${rampUpWait}</jvmArg>
+				<jvmArg>-Drampup-random-users=${rampUpRandomUsers}</jvmArg>
+				<jvmArg>-Drampup-exhaus-users=${rampUpExhausUsers}</jvmArg>
 				<jvmArg>-Duser-loop=${userLoop}</jvmArg>
 				<jvmArg>-Dsite-loop=${siteLoop}</jvmArg>
 				<jvmArg>-Dtool-loop=${toolLoop}</jvmArg>

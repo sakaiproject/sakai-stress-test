@@ -16,6 +16,9 @@ class SakaiSimulation extends Simulation {
 	val randomUsers: Int = Integer.getInteger("random-users",1)
 	val exhausUsers: Int = Integer.getInteger("exhaus-users",1)
 	val rampUpTime: Int = Integer.getInteger("rampup-time",10)
+	val rampUpRandomUsers: Int = Integer.getInteger("rampup-random-users",0)
+	val rampUpExhausUsers: Int = Integer.getInteger("rampup-exhaus-users",0)
+	val rampUpWait: Int = Integer.getInteger("rampup-wait",10)
 	val siteLoop: Int = Integer.getInteger("site-loop",1)
 	val toolLoop: Int = Integer.getInteger("tool-loop",1)
 	val userLoop: Int = Integer.getInteger("user-loop",1)
@@ -310,16 +313,38 @@ class SakaiSimulation extends Simulation {
 	object Setup {
 		val scenario = ListBuffer[io.gatling.core.structure.PopulationBuilder]()
 		if (randomUsers>0) {
-			scenario += randomUsersScn.inject(
-			    rampUsers(randomUsers) over (rampUpTime seconds)
-			    /** More options here http://gatling.io/docs/2.2.2/general/simulation_setup.html */
-			)
+			if (rampUpRandomUsers>0) {
+				if (rampUpRandomUsers<randomUsers) { 
+					scenario += randomUsersScn.inject(
+					    splitUsers(randomUsers) into(rampUsers(rampUpRandomUsers) over(rampUpTime seconds)) separatedBy(rampUpWait seconds)
+					    /** More options here http://gatling.io/docs/2.2.2/general/simulation_setup.html */
+					)
+				} else {
+					throw new IllegalArgumentException("ERROR: rampUpRandomUsers must be lower than randomUsers !!")
+				}
+			} else {
+				scenario += randomUsersScn.inject(
+				    rampUsers(randomUsers) over (rampUpTime seconds)
+				    /** More options here http://gatling.io/docs/2.2.2/general/simulation_setup.html */
+				)
+			}
 		}
 		if (exhausUsers>0) {
-			scenario += exhaustiveUsersScn.inject(
-			    rampUsers(exhausUsers) over (rampUpTime seconds)
-			    /** More options here http://gatling.io/docs/2.2.2/general/simulation_setup.html */
-			)
+			if (rampUpExhausUsers>0) {
+				if (rampUpExhausUsers<exhausUsers) {
+					scenario += exhaustiveUsersScn.inject(
+					    splitUsers(exhausUsers) into(rampUsers(rampUpExhausUsers) over(rampUpTime seconds)) separatedBy(rampUpWait seconds)
+					    /** More options here http://gatling.io/docs/2.2.2/general/simulation_setup.html */
+					)
+				} else {
+					throw new IllegalArgumentException("ERROR: rampUpExhausUsers must be lower than exhausUsers !!")
+				}
+			} else {
+				scenario += exhaustiveUsersScn.inject(
+				    rampUsers(exhausUsers) over (rampUpTime seconds)
+				    /** More options here http://gatling.io/docs/2.2.2/general/simulation_setup.html */
+				)
+			}
 		}
 	}
 
