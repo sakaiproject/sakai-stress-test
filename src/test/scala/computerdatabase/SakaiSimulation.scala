@@ -65,6 +65,7 @@ class SakaiSimulation extends Simulation {
 	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first.map(s => s.replace("My Workspace","Home")) zip second.map(s => URLDecoder.decode(s,"UTF-8")))
 	def checkAttrs(cssSelector: String, attrName: String, varName: String) = css(cssSelector,attrName).findAll.saveAs(varName)
 	def checkElement(cssSelector: String, varName: String) = css(cssSelector).findAll.saveAs(varName)
+	def checkPresence(varName: String) = css("div#presenceWrapper > script").find.transform( text => { text.substring(text.indexOf("presence/")+9,text.indexOf("?")) }).saveAs(varName) 
 	
 	def checkItsMe (username: String) = 
 		http("GetCurrentUser")
@@ -72,6 +73,13 @@ class SakaiSimulation extends Simulation {
 		.headers(headers)
 		.check(status.is(successStatus))
 		.check(jsonPath("$[?(@.eid=='" + username + "')]"))
+	
+	def checkPresenceRequest (varName: String) = 
+		http("Presence")
+		.get("/portal/presence/${"+varName+"}?output_fragment=yes&auto=true")
+		.headers(headers)
+		.check(status.is(successStatus))
+		.check(css("ul.presenceList").exists)
 	
 	def joinInSessionOneFiltered(session: Session, firstName: String, secondName: String, finalName: String, filteredBy: String) = 
 		session
@@ -120,10 +128,15 @@ class SakaiSimulation extends Simulation {
 						.get("/portal/site/!admin")
 						.headers(headers)
 						.check(status.is(successStatus))
+						.check(checkPresence("presenceScript"))
 						.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","adminToolUrls"))
 						.check(checkAttrs("span.Mrphs-toolsNav__menuitem--icon","class","adminToolIds")))
 					.exec(session => { joinInSessionOneFiltered(session,"adminToolIds","adminToolUrls","sutool","icon-sakai-su") })
 					.pause(pauseMin,pauseMax)
+					.doIf("${presenceScript.exists()}") {
+						exec(checkPresenceRequest("presenceScript"))
+						.pause(pauseMin,pauseMax)
+					}
 					.exec(http("BecomeUser")
 						.get("${sutool._2}")
 						.headers(headers)
@@ -239,6 +252,7 @@ class SakaiSimulation extends Simulation {
 					.headers(headers)
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
+					.check(checkPresence("presenceScript"))
 					.check(checkAttrs("a[title].Mrphs-toolsNav__menuitem--link","href","toolUrls"))
 					.check(css("a[title] > span.Mrphs-toolsNav__menuitem--icon","class").findAll.transform( 
 						full_list => {
@@ -251,6 +265,10 @@ class SakaiSimulation extends Simulation {
 						}).saveAs("toolIds")))
 				.pause(pauseMin,pauseMax)
 				.exec(session => { joinInSessionFiltered(session,"toolIds","toolUrls","tools",fixedToolId,".*\\/portal\\/site\\/.*\\/(tool|page|page-reset)\\/.*") })
+				.doIf("${presenceScript.exists()}") {
+					exec(checkPresenceRequest("presenceScript"))
+					.pause(pauseMin,pauseMax)
+				}
 			}
 			.doIf(_("tools").as[Vector[String]].length>0) {
 				BrowseTools.browse(random)
