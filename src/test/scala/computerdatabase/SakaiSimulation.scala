@@ -65,7 +65,12 @@ class SakaiSimulation extends Simulation {
 	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first.map(s => s.replace("My Workspace","Home")) zip second.map(s => URLDecoder.decode(s,"UTF-8")))
 	def checkAttrs(cssSelector: String, attrName: String, varName: String) = css(cssSelector,attrName).findAll.saveAs(varName)
 	def checkElement(cssSelector: String, varName: String) = css(cssSelector).findAll.saveAs(varName)
-	def checkPresence(varName: String) = css("div#presenceWrapper > script").find.transform( text => { text.substring(text.indexOf("presence/")+9,text.indexOf("?")) }).saveAs(varName) 
+	def checkPresence(varName: String) = css("div#presenceWrapper > script").transformOption( 
+		opt => opt match { 
+			case None => None
+			case Some(text) => Some(text.substring(text.indexOf("presence/")+9,text.indexOf("?"))) 
+		}
+	).optional.saveAs(varName) 
 	
 	def checkItsMe (username: String) = 
 		http("GetCurrentUser")
