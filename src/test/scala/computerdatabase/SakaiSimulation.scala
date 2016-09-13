@@ -71,6 +71,8 @@ class SakaiSimulation extends Simulation {
 			case Some(text) => Some(text.substring(text.indexOf("presence/")+9,text.indexOf("?"))) 
 		}
 	).optional.saveAs(varName) 
+	def checkLatestData(varName: String) = css("div#Mrphs-portalChat","id").optional.saveAs(varName) 
+	
 	
 	def checkItsMe (username: String) = 
 		http("GetCurrentUser")
@@ -85,6 +87,13 @@ class SakaiSimulation extends Simulation {
 		.headers(headers)
 		.check(status.is(successStatus))
 		.check(css("ul.presenceList").exists)
+
+	def checkLatestDataRequest (varName: String) = 
+		http("LatestData")
+		.get("/direct/portal-chat/${"+varName+"}/latestData.json?auto=true&siteId=${"+varName+"}&online=true&videoAgent=chrome&_=0")
+		.headers(headers)
+		.check(status.is(successStatus))		
+		.check(jsonPath("$[?(@.displayTitle=='latestData')]"))
 	
 	def joinInSessionOneFiltered(session: Session, firstName: String, secondName: String, finalName: String, filteredBy: String) = 
 		session
@@ -133,6 +142,8 @@ class SakaiSimulation extends Simulation {
 						.get("/portal/site/!admin")
 						.headers(headers)
 						.check(status.is(successStatus))
+						.check(css("ul.favoriteSiteList > li.is-selected > a.site-favorite-btn","data-site-id").optional.saveAs("siteId"))
+						.check(checkLatestData("latestData"))
 						.check(checkPresence("presenceScript"))
 						.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","adminToolUrls"))
 						.check(checkAttrs("span.Mrphs-toolsNav__menuitem--icon","class","adminToolIds")))
@@ -140,6 +151,10 @@ class SakaiSimulation extends Simulation {
 					.pause(pauseMin,pauseMax)
 					.doIf("${presenceScript.exists()}") {
 						exec(checkPresenceRequest("presenceScript"))
+						.pause(pauseMin,pauseMax)
+					}
+					.doIf("${latestData.exists()}") {
+						exec(checkLatestDataRequest("siteId"))
 						.pause(pauseMin,pauseMax)
 					}
 					.exec(http("BecomeUser")
@@ -257,7 +272,9 @@ class SakaiSimulation extends Simulation {
 					.headers(headers)
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
+					.check(css("ul.favoriteSiteList > li.is-selected > a.site-favorite-btn","data-site-id").optional.saveAs("siteId"))
 					.check(checkPresence("presenceScript"))
+					.check(checkLatestData("latestData"))
 					.check(checkAttrs("a[title].Mrphs-toolsNav__menuitem--link","href","toolUrls"))
 					.check(css("a[title] > span.Mrphs-toolsNav__menuitem--icon","class").findAll.transform( 
 						full_list => {
@@ -272,6 +289,10 @@ class SakaiSimulation extends Simulation {
 				.exec(session => { joinInSessionFiltered(session,"toolIds","toolUrls","tools",fixedToolId,".*\\/portal\\/site\\/.*\\/(tool|page|page-reset)\\/.*") })
 				.doIf("${presenceScript.exists()}") {
 					exec(checkPresenceRequest("presenceScript"))
+					.pause(pauseMin,pauseMax)
+				}
+				.doIf("${latestData.exists()}") {
+					exec(checkLatestDataRequest("siteId"))
 					.pause(pauseMin,pauseMax)
 				}
 			}
