@@ -147,7 +147,7 @@ class SakaiSimulation extends Simulation {
 						.check(checkPresence("presenceScript"))
 						.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","adminToolUrls"))
 						.check(checkAttrs("span.Mrphs-toolsNav__menuitem--icon","class","adminToolIds")))
-					.exec(session => { joinInSessionOneFiltered(session,"adminToolIds","adminToolUrls","sutool","icon-sakai-su") })
+					.exec(session => { joinInSessionOneFiltered(session,"adminToolIds","adminToolUrls","sutool","icon-sakai--sakai-su") })
 					.pause(pauseMin,pauseMax)
 					.doIf("${presenceScript.exists()}") {
 						exec(checkPresenceRequest("presenceScript"))
@@ -157,7 +157,7 @@ class SakaiSimulation extends Simulation {
 						exec(checkLatestDataRequest("siteId"))
 						.pause(pauseMin,pauseMax)
 					}
-					.exec(http("BecomeUser")
+					.exec(http("BecomeUserForm")
 						.get("${sutool._2}")
 						.headers(headers)
 						.check(status.is(successStatus))
@@ -281,7 +281,7 @@ class SakaiSimulation extends Simulation {
 							/** class also contains non useful classes, drop them */
 							val new_list = new Array[String](full_list.length) 
 							for (i <- 0 until full_list.length) {
-								new_list(i) = full_list(i).replace("Mrphs-toolsNav__menuitem--icon","").replace("icon-active","").replace("icon-","").trim()
+								new_list(i) = full_list(i).replace("Mrphs-toolsNav__menuitem--icon","").replace("icon-active","").replace("icon-sakai--","").trim()
 							}
 							new_list.to[collection.immutable.Seq]
 						}).saveAs("toolIds")))
