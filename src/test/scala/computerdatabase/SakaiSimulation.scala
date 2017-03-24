@@ -65,6 +65,14 @@ class SakaiSimulation extends Simulation {
 	def join(first: Vector[String], second: Vector[String]) : Vector[(String,String)] = (first.map(s => s.replace("My Workspace","Home")) zip second.map(s => URLDecoder.decode(s,"UTF-8")))
 	def checkAttrs(cssSelector: String, attrName: String, varName: String) = css(cssSelector,attrName).findAll.saveAs(varName)
 	def checkElement(cssSelector: String, varName: String) = css(cssSelector).findAll.saveAs(varName)
+	def checkPresence(varName: String) = css("div#presenceWrapper > script").transformOption( 
+		opt => opt match { 
+			case None => None
+			case Some(text) => Some(text.substring(text.indexOf("presence/")+9,text.indexOf("?"))) 
+		}
+	).optional.saveAs(varName) 
+	def checkLatestData(varName: String) = css("div#Mrphs-portalChat","id").optional.saveAs(varName) 
+	
 	
 	def checkItsMe (username: String) = 
 		http("GetCurrentUser")
@@ -72,6 +80,20 @@ class SakaiSimulation extends Simulation {
 		.headers(headers)
 		.check(status.is(successStatus))
 		.check(jsonPath("$[?(@.eid=='" + username + "')]"))
+	
+	def checkPresenceRequest (varName: String) = 
+		http("Presence")
+		.get("/portal/presence/${"+varName+"}?output_fragment=yes&auto=true")
+		.headers(headers)
+		.check(status.is(successStatus))
+		.check(css("ul.presenceList").exists)
+
+	def checkLatestDataRequest (varName: String) = 
+		http("LatestData")
+		.get("/direct/portal-chat/${"+varName+"}/latestData.json?auto=true&siteId=${"+varName+"}&online=true&videoAgent=chrome&_=0")
+		.headers(headers)
+		.check(status.is(successStatus))		
+		.check(jsonPath("$[?(@.displayTitle=='latestData')]"))
 	
 	def joinInSessionOneFiltered(session: Session, firstName: String, secondName: String, finalName: String, filteredBy: String) = 
 		session
@@ -120,11 +142,22 @@ class SakaiSimulation extends Simulation {
 						.get("/portal/site/!admin")
 						.headers(headers)
 						.check(status.is(successStatus))
+						.check(css("ul.favoriteSiteList > li.is-selected > a.site-favorite-btn","data-site-id").optional.saveAs("siteId"))
+						.check(checkLatestData("latestData"))
+						.check(checkPresence("presenceScript"))
 						.check(checkAttrs("a.Mrphs-toolsNav__menuitem--link","href","adminToolUrls"))
 						.check(checkAttrs("span.Mrphs-toolsNav__menuitem--icon","class","adminToolIds")))
-					.exec(session => { joinInSessionOneFiltered(session,"adminToolIds","adminToolUrls","sutool","icon-sakai-su") })
+					.exec(session => { joinInSessionOneFiltered(session,"adminToolIds","adminToolUrls","sutool","icon-sakai--sakai-su") })
 					.pause(pauseMin,pauseMax)
-					.exec(http("BecomeUser")
+					.doIf("${presenceScript.exists()}") {
+						exec(checkPresenceRequest("presenceScript"))
+						.pause(pauseMin,pauseMax)
+					}
+					.doIf("${latestData.exists()}") {
+						exec(checkLatestDataRequest("siteId"))
+						.pause(pauseMin,pauseMax)
+					}
+					.exec(http("BecomeUserForm")
 						.get("${sutool._2}")
 						.headers(headers)
 						.check(status.is(successStatus))
@@ -239,18 +272,29 @@ class SakaiSimulation extends Simulation {
 					.headers(headers)
 					.check(status.is(successStatus))
 					.check(css("span.Mrphs-hierarchy--siteName","title").is("${site._1}"))
+					.check(css("ul.favoriteSiteList > li.is-selected > a.site-favorite-btn","data-site-id").optional.saveAs("siteId"))
+					.check(checkPresence("presenceScript"))
+					.check(checkLatestData("latestData"))
 					.check(checkAttrs("a[title].Mrphs-toolsNav__menuitem--link","href","toolUrls"))
 					.check(css("a[title] > span.Mrphs-toolsNav__menuitem--icon","class").findAll.transform( 
 						full_list => {
 							/** class also contains non useful classes, drop them */
 							val new_list = new Array[String](full_list.length) 
 							for (i <- 0 until full_list.length) {
-								new_list(i) = full_list(i).replace("Mrphs-toolsNav__menuitem--icon","").replace("icon-active","").replace("icon-","").trim()
+								new_list(i) = full_list(i).replace("Mrphs-toolsNav__menuitem--icon","").replace("icon-active","").replace("icon-sakai--","").trim()
 							}
 							new_list.to[collection.immutable.Seq]
 						}).saveAs("toolIds")))
 				.pause(pauseMin,pauseMax)
 				.exec(session => { joinInSessionFiltered(session,"toolIds","toolUrls","tools",fixedToolId,".*\\/portal\\/site\\/.*\\/(tool|page|page-reset)\\/.*") })
+				.doIf("${presenceScript.exists()}") {
+					exec(checkPresenceRequest("presenceScript"))
+					.pause(pauseMin,pauseMax)
+				}
+				.doIf("${latestData.exists()}") {
+					exec(checkLatestDataRequest("siteId"))
+					.pause(pauseMin,pauseMax)
+				}
 			}
 			.doIf(_("tools").as[Vector[String]].length>0) {
 				BrowseTools.browse(random)
