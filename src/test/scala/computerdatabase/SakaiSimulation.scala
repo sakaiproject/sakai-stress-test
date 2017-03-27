@@ -113,6 +113,11 @@ class SakaiSimulation extends Simulation {
 		.remove(secondName)
 		.set(finalName, join(session(firstName).as[Vector[String]],session(secondName).as[Vector[String]]).filter(_._1 matches oneFilteredBy).filter(_._2 matches twoFilteredBy))
 		
+	def clearAjaxData(session: Session, var1: String, var2: String) =
+		session
+		.remove(var1)
+		.remove(var2)
+		
 	object Gateway {
 		val gateway = group("Gateway") {
 			exec(http("Portal")
@@ -182,6 +187,7 @@ class SakaiSimulation extends Simulation {
 						.check(checkAttrs("div.fav-title > a","href","siteUrls"))
 						.check(checkAttrs("div.fav-title > a","title","siteTitles")))
 					.exec(session => { joinInSessionFiltered(session,"siteTitles","siteUrls","sites",fixedSiteTitle,".*\\/portal\\/site\\/"+fixedSiteId) })
+					.exec(session => { clearAjaxData(session,"presenceScript","latestData") })
 				}
 			}
 			{	/** Use real credentials */
@@ -198,6 +204,7 @@ class SakaiSimulation extends Simulation {
 				.pause(pauseMin,pauseMax)
 				.exec(session => { joinInSessionFiltered(session,"siteTitles","siteUrls","sites",fixedSiteTitle,".*\\/portal\\/site\\/"+fixedSiteId) })
 				.exec(checkItsMe("${username}"))
+				.exec(session => { clearAjaxData(session,"presenceScript","latestData") })
 			}
 		} 
 	}
