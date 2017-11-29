@@ -130,3 +130,10 @@ Gatling return an HTML report that gives you lot of information about the stress
 
 Please go to http://gatling.io/docs/2.2.2/general/reports.html to know more about it.
 
+Run with docker
+===============
+
+You can run all the previous commands using maven docker image.
+
+```docker run -it --rm --name stress -v "$PWD":/usr/stress -v "$PWD/.m2":/usr/.m2 -w /usr/stress maven:3.5.2-jdk-8-alpine mvn test -Dmaven.repo.local=/usr/.m2```
+
